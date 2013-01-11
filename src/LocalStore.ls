@@ -9,11 +9,12 @@
 		(options) ->
 			super options
 
-		_set: !(key, value)->
+		_set: !(key, value, cb)->
 			localStorage[key] = value
+			cb!
 
-		_get: (key)->
-			localStorage[key] || '{}'
+		_get: (key, cb)->
+			cb(localStorage[key] || '{}')
 
 		_key: (entity, id)->
 			super entity, id .replace '/', '.'

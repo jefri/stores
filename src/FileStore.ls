@@ -17,16 +17,13 @@ FileStore = ->
 			_checkDir @settings.directory
 			@storage = @settings.directory
 
-		_set: (key, value)->
+		_set: !(key, value, cb)->
 			path = @_buildPath key
-			fs.writeFileSync path, value
+			fs.writeFile path, value, (!->cb()), (!->cb())
 
-		_get: (key)->
+		_get: (key, cb)->
 			path = @_buildPath key
-			try
-				fs.readFileSync path
-			catch
-				"{}"
+			fs.readFile path, (!-> cb(it)), (!-> cb("{}"))
 
 		_buildPath: (key)->
 			key = key.split '/'
