@@ -99,10 +99,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-livescript');
 	grunt.loadNpmTasks('grunt-jasmine-node');
 
+	grunt.registerTask('build', 'livescript concat:node concat:min');
 	grunt.registerTask('jasmineTests', 'livescript:jasmine jasmine_node');
 	grunt.registerTask('qunitTests', 'livescript:qunit concat:qunitMin qunit:min');
 	grunt.registerTask('nunit', 'test');
 	grunt.registerTask('nunitTests', 'livescript:nunit nunit');
 	grunt.registerTask('tests', 'server:test nunitTests qunitTests jasmineTests');
-	grunt.registerTask('default', 'clean livescript concat:node concat:min tests');
+	grunt.registerTask('default', 'clean build tests');
 };
