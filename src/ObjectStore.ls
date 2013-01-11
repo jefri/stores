@@ -15,22 +15,25 @@
 
 		# #### _set*(key, value)*
 		# Generic key/value setter, should be overwritten by extending classes.
-		_set: !(key, value)->
+		_set: !(key, value, cb)->
 			@_store[key] = value
+			setTimeout ~>cb!
 
 		# #### _get*(key)*
 		# Generic key/value getter, should be overwritten by extending classes.
-		_get: (key)->
-			@_store[key] || '{}'
+		_get: !(key, cb)->
+			setTimeout ~>cb(@_store[key] || '{}')
 
 		# ### execute*(type, transaction)*
 		# Run the transaction.
 		execute: (type, transaction) ->
 			transaction = _transactify transaction
 			@sending <: transaction
-			@"do_#{type}" transaction
-			@settings.runtime.expand transaction
-			_.Deferred!resolve transaction
+			d = _.Deferred!
+			@"do_#{type}" transaction, !~>
+				@settings.runtime.expand transaction
+				d.resolve transaction
+			d
 
 		# #### get*(transaction)*
 		# Execute as a `get` transaction.
@@ -44,110 +47,132 @@
 
 		# ### do_persist*(transction)*
 		# Treat the transaction as a persistence call. Save the data.
-		do_persist: (transaction) ->
-			transaction.entities =
-				for entity in transaction.entities
-					@_save entity
+		do_persist: !(transaction, cb) ->
+			chain = []
+			entities = []
+			for entity in transaction.entities
+				do~>
+					chain.push d = new _.Deferred!
+					@_save entity, !(ent)->
+						entities.push ent
+						d.resolve!
+			_.when.apply(null, chain).then !~>
+				transaction.entities = entities
+				cb!
 
 		# #### _save*(entity)*
 		# Save the data in the store's storage.
-		_save: (entity) ->
+		_save: !(entity, cb)->
 			# Merge the new data over the old data.
-			entity = @_find(entity) <<<< entity
-			# Store the JSON of the entity.
-			@_set @_key(entity), JSON.stringify(entity)
-			# Register the entity with the type map.
-			@_type entity._type, entity._id
-			# Return the bare encoded object.
-			entity
+			@_find entity, !(ent)~>
+				entity := ent <<<< entity
+				# Store the JSON of the entity.
+				@_set @_key(entity), JSON.stringify(entity), !~>
+					# Register the entity with the type map.
+					@_type entity._type, entity._id, !~>
+						# Return the bare encoded object.
+						cb entity
 
 		# ### do_get*(transaction)*
 		# Treat the transaction as a lookup. Find all data matching the specs.
-		do_get: (transaction) ->
+		do_get: !(transaction, cb)->
 			# Let _lookup handle the actual lookups. Each spec is an `or` op, so flatten then remove duplicates.
-			ents = for entity in transaction.entities
-				@_lookup entity
-			ents = _.flatten ents
-			transaction.entities = _.uniq(
-				# The lookup
-				_(ents).filter -> it
-				false,
-				# Uniq based on type.id
-				~> it._type + '.' + it[@settings.runtime.definition(it._type).key]
-			)
-			transaction
+			ents = []
+			defs = []
+			for entity in transaction.entities
+				do~>
+					defs.push d = _.Deferred!
+					@_lookup entity, !(ent)~>
+						ents.push ent
+						d.resolve!
+			_.when.apply(null, defs).done !~>
+				ents := _.flatten ents
+				transaction.entities = _.uniq(
+					# The lookup
+					_(ents).filter -> it
+					false,
+					# Uniq based on type.id
+					~> it._type + '.' + it[@settings.runtime.definition(it._type).key]
+				)
+				cb transaction
 
 		# #### _find*(entity)*
 		# Return an entity directly, or pass a spec to _lookup.
-		_find: (entity) ->
-			JSON.parse @_get @_key entity
+		_find: !(entity, cb) ->
+			@_get @_key(entity), (res)~>
+				cb JSON.parse res
 
 		# #### _lookup*(spec)*
 		# Given a transaction spec, pull all entities (including relationships) that match.
 		# See JEFRi Core documentation 5.1.1 Gory Get Details for rules.
-		_lookup: (spec) ->
+		_lookup: !(spec, cb) ->
 			# Need the key, properties, and relationships details
 			def = @settings.runtime.definition spec._type
+			results = []
 			# Get everything for this type
-			results = for id in _.keys(@_type(spec._type))
-				JSON.parse @_get @_key spec, id
+			@_type spec._type, null, !(list)~>
+				defs = []
+				for id in _.keys list
+					do~>
+						defs.push d = _.Deferred!
+						@_get @_key(spec, id), (res)~>
+							results.push JSON.parse res
+							d.resolve!
 
-			# If we didn't find anything, don't return anything. Rule 0.
-			if results.length is 0
-				return  
+				_.when.apply(null, defs).done !~>
+					# If we didn't find anything, don't return anything. Rule 0.
+					if results.length is 0
+						return  
 
-			# Start immediately with the key to pear down results quickly. Rule 1.
-			if def.key of spec
-				results = [results[spec[def.key]]]
+					# Start immediately with the key to pear down results quickly. Rule 1.
+					if def.key of spec
+						results := [results[spec[def.key]]]
 
-			# Filter based on property specifications
-			for name, property of def.properties
-				if name of spec and name isnt def.key
-					results = _(results).filter(_sieve(name, property, spec[name]))
+					# Filter based on property specifications
+					for name, property of def.properties
+						if name of spec and name isnt def.key
+							results := _(results).filter(_sieve(name, property, spec[name]))
 
-			# Include relationships
-			for name, relationship of def.relationships
-				if name of spec
-					# For all the entities found so far, include their relationships as well
-					give = []
-					take = []
-					for entity, i in results
-						related = do ~>
-							relspec = _.extend {}, spec[name], {_type: relationship.to.type}
-							relspec[relationship.to.property] = entity[relationship.property]
-							# Just going to use
-							@_lookup relspec
+					_related def, !(resultsWithRelations)~>
+						# Return the filtered results.
+						cb resultsWithRelations
 
-						# Giveth, or taketh away
-						if  related.length
-							give.push  related
-						# else
-						# 	take.push i
-					# Remove the indicies which didn't have a relation.
-					take.reverse!
-					#
-					for i in take
-						j = i+1
-						end = results[j til results.length]
-						results = results[0 til i]
-						[].push.apply results, end
-					[].push.apply results, give
-
-			# Return the filtered results.
-			results
+			~! function _related def, cb
+				defs = []
+				# Include relationships
+				for name, relationship of def.relationships
+					if name of spec
+						# For all the entities found so far, include their relationships as well
+						for entity, i in results
+							do~>
+								defs.push d = _.Deferred!
+								relspec = _.extend {}, spec[name], {_type: relationship.to.type}
+								relspec[relationship.to.property] = entity[relationship.property]
+								# Just going to use
+								@_lookup relspec, !(related)~>
+									# Giveth, or taketh away
+									if related.length
+										[].push.apply results, related
+										d.resolve!
+				_.when.apply(null, defs).done !~>
+					cb results
 
 		# #### _type*(type[, id])*
 		# Get a set of stored IDs for a particular type. If an ID is passed in, add it to the set.
-		_type: (type, id=null) ->
+		_type: !(type, id, cb) ->
 			# Get the current set
-			list = JSON.parse @_get(type) || "{}"
-			if id
-				# Indexed by ID, so just need an empty set.
-				list[id] = ""
-				# Restringify. Silly hashmaps being string -> string
-				@_set type, JSON.stringify list
-			# Return the list.
-			list
+			@_get type, (res)~>
+				list = JSON.parse res
+
+				if id
+					# Indexed by ID, so just need an empty set.
+					list[id] = ""
+					# Restringify. Silly hashmaps being string -> string
+					@_set type, JSON.stringify(list), !~>
+						cb list
+				else
+					# Return the list.
+					cb list
 
 		# #### _key*(entity)*
 		# Return the full key type/id string for an entity, since this is the bare entity with no methods.
@@ -159,7 +184,7 @@
 		# ### _sieve*(name, property, spec)*
 		# Return a function to use to filter on a particular spec field. These functions implement
 		# the logic described in JEFRi Core docs 5.1.1
-		_sieve = (name, property, spec) ->
+		_sieve = (name, property, spec) ~>
 			# Normalize rules 2 and 3 to operator array
 			if _.isNumber spec
 				if spec % 1 is 0
@@ -173,7 +198,7 @@
 
 			# Guard against bad specs
 			if not spec
-				spec = ['=', undefined]
+				spec = ['=', void]
 
 			# Spec should be an array by now, if it isn't, there's a problem.
 			if not _.isArray spec
