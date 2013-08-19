@@ -4,7 +4,6 @@
 #     For full details and documentation:
 #     http://jefri.org
 
-
 	root = @
 
 	root.JEFRi = if root.JEFRi then root.JEFRi else {}
@@ -12,7 +11,7 @@
 	class CouchStore
 		constructor: (options) ->
 			@settings = { version: "1.0", size: Math.pow(2, 16) }
-			_.extend(@settings, options)
+			_.extend @settings, options
 			if not @settings.runtime
 				throw {message: "CouchStore instantiated without runtime to reference."}
 

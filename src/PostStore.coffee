@@ -17,7 +17,7 @@
 
 			if @settings.remote
 				#Configured correctly, so we can safely transact.
-				@ <<<
+				_(@).extend
 					get: (transaction)->
 						url = "#{@settings.remote}get"
 						@_send url, transaction, 'getting', 'gotten'
@@ -30,17 +30,17 @@
 				@get = @persist = (transaction)->
 					transaction.entities = []
 					# _.trigger transaction, "gotten"
-					_.Deferred!resolve transaction .promise!
+					Q.Defer().resolve(transaction).promise
 
-		_send: (url, transaction, pre, post)~>
+		_send: (url, transaction, pre, post)=>
 			# _.trigger(transaction, pre);
 			# _.trigger(self, pre, transaction);
 			# _.trigger(self, 'sending', transaction);
-			_.request.post url,
-				data    : transaction.toString!
+			Request.post url,
+				data    : transaction.toString()
 				dataType: "application/json"
-			.done (data)~>
-				if _(data).isString!
+			.done (data)=>
+				if _(data).isString()
 					data = JSON.parse data
 				# Always updateOnIntern
 				@settings.runtime.expand data, true
@@ -49,8 +49,8 @@
 				# _.trigger(transaction, post, data);
 				data
 
-	PostStore:: <<<
+	_(PostStore::).extend
 		execute: (type, transaction)->
 			@[type] transaction
 
-	JEFRi.store \PostStore, -> PostStore
+	JEFRi.store "PostStore", -> PostStore

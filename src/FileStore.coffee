@@ -1,18 +1,19 @@
-/*
-* FileStore
-* https://github.com/DavidSouther/JEFRi
-*
-* Copyright (c) 2012 David Souther
-* Licensed under the MIT license.
-*/
+###
+ FileStore
+ https://github.com/DavidSouther/JEFRi
+
+ Copyright (c) 2012 David Souther
+ Licensed under the MIT license.
+###
 FileStore = ->
-	require! { fs }
+	Q = require "q"
+	fs = require "fs"
 
 	class FileStore extends JEFRi.Stores.ObjectStore
-		(options) ->
+		constructor: (options)->
 			opts = 
 				directory: "./.jefri"
-			opts <<< options
+			_(opts).extend options
 			super opts
 			_checkDir @settings.directory
 			@storage = @settings.directory
@@ -36,13 +37,13 @@ FileStore = ->
 			path = "#{path}/#{key[1]}"
 			path
 
-		_checkDir = !(directory)->
+		_checkDir = (directory)->
 			try
 				dir = fs.statSync directory
 			catch
 				fs.mkdirSync directory
 				dir = fs.statSync directory
-			if not dir.isDirectory!
+			if not dir.isDirectory()
 				throw "FileStorage target isn't a directory: #{directory}"
 
-JEFRi.store \FileStore, FileStore
+JEFRi.store "FileStore", FileStore

@@ -1,8 +1,0 @@
-{
-  "name": "jefri-stores",
-  "version": "1.0.1",
-  "main": ["./build/dist/jefri-stores.min.js"],
-  "dependencies": {
-  	"jefri": "~1.0.0"
-  }
-}
