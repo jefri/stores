@@ -1,6 +1,7 @@
+should = require "should"
 jefri = require "jefri"
 stores = require "../../../../lib/jefri-stores"
 
-describe "PostStore", (a)->
+describe "PostStore", ->
 	it "smokes", ->
-		expect(jefri.Stores.PostStore) .toBeDefined()
+		should.exist jefri.Stores.PostStore
