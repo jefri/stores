@@ -37,5 +37,13 @@ describe "FileStore", ->
 				'_runtime'
 				'_listeners'
 			]
-			entity.should.have.proprety key for key in keys
+			entity.should.have.property key for key in keys
+		.finally done
+
+	it "saves nothing", (done)->
+		filestore = new jefri.Stores.FileStore runtime: runtime
+		transaction = new jefri.Transaction []
+		filestore.persist(transaction)
+		.then (transaction)->
+			transaction.should.have.property("entities").with.length 0
 		.finally done
