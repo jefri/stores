@@ -39,10 +39,6 @@ module.exports = (grunt) ->
 				options:
 					bare: true
 
-			spec:
-				files:[
-					coffees "test/spec/node/coffee/", "test/spec/node/spec/"
-				]
 		concat:
 			node:
 				src: ["<banner:meta.banner>", "src/node/pre.js", "src/PostStore.js", "dist/compiled/Stores.js", "src/node/post.js"]
@@ -63,7 +59,9 @@ module.exports = (grunt) ->
 
 		mochaTest:
 			spec:
-				src: ["test/spec/node/spec/**/*.js"]
+				options:
+					reporter: 'nyan'
+				src: ["test/spec/node/**/*.coffee"]
 
 		qunit:
 			min:
@@ -90,7 +88,7 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks "grunt-contrib-concat"
 	grunt.loadNpmTasks "grunt-contrib-clean"
 
-	grunt.registerTask "jasmineTests", ["coffee:spec", "mochaTest:spec"]
+	grunt.registerTask "jasmineTests", ["mochaTest:spec"]
 	grunt.registerTask "qunitTests", ["coffee:qunit", "qunit:min"]
 	grunt.registerTask "tests", ["connect:testing", "qunitTests", "jasmineTests"]
 	grunt.registerTask "default", ["clean", "coffee:app", "concat:node", "concat:min", "tests"]

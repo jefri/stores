@@ -30,4 +30,3 @@ describe "JEFRi ObjectStore", ->
 				s.get(transaction) .then (data)->
 					data.entities.length.should.equal 12, "Got all entities back."
 					done()
- 
