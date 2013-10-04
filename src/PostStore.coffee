@@ -43,7 +43,7 @@
 				if _(data).isString()
 					data = JSON.parse data
 				# Always updateOnIntern
-				@settings.runtime.expand data, true
+				@settings.runtime.expand data
 				# _.trigger(self, 'sent', data);
 				# _.trigger(self, post, data);
 				# _.trigger(transaction, post, data);
