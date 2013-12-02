@@ -9,7 +9,7 @@
 	# Handles POSTing a transaction to a remote JEFRi instance.
 
 	class PostStore
-		(options) ->
+		constructor: (options)->
 			@settings = { version: "1.0", size: Math.pow(2, 16) }
 			_.extend @settings, options
 			if not @settings.runtime
@@ -39,11 +39,11 @@
 			Request.post url,
 				data    : transaction.toString()
 				dataType: "application/json"
-			.done (data)=>
+			.then (data)=>
 				if _(data).isString()
 					data = JSON.parse data
 				# Always updateOnIntern
-				@settings.runtime.expand data, true
+				@settings.runtime.expand data
 				# _.trigger(self, 'sent', data);
 				# _.trigger(self, post, data);
 				# _.trigger(transaction, post, data);

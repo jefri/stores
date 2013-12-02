@@ -39,10 +39,6 @@ module.exports = (grunt) ->
 				options:
 					bare: true
 
-			jasmine:
-				files:[
-					coffees "test/spec/node/coffee/", "test/spec/node/spec/"
-				]
 		concat:
 			node:
 				src: ["<banner:meta.banner>", "src/node/pre.js", "src/PostStore.js", "dist/compiled/Stores.js", "src/node/post.js"]
@@ -61,11 +57,11 @@ module.exports = (grunt) ->
 				root: '.'
 				port: 8000
 
-		jasmine_node:
-			projectRoot: "test/spec/node"
-			specFolderName: "spec"
-			match: ""
-			matchall: true
+		mochaTest:
+			spec:
+				options:
+					reporter: 'nyan'
+				src: ["test/spec/node/**/*.coffee"]
 
 		qunit:
 			min:
@@ -82,9 +78,7 @@ module.exports = (grunt) ->
 				files: ["src/*coffee", "test/**/*"]
 				tasks: ["default"]
 
-
-
-	grunt.loadNpmTasks "grunt-jasmine-node"
+	grunt.loadNpmTasks "grunt-mocha-test"
 	grunt.loadNpmTasks "grunt-contrib-watch"
 	grunt.loadNpmTasks "grunt-contrib-qunit"
 	grunt.loadNpmTasks "grunt-contrib-nodeunit"
@@ -94,7 +88,7 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks "grunt-contrib-concat"
 	grunt.loadNpmTasks "grunt-contrib-clean"
 
-	grunt.registerTask "jasmineTests", ["coffee:jasmine", "jasmine_node"]
+	grunt.registerTask "jasmineTests", ["mochaTest:spec"]
 	grunt.registerTask "qunitTests", ["coffee:qunit", "qunit:min"]
 	grunt.registerTask "tests", ["connect:testing", "qunitTests", "jasmineTests"]
 	grunt.registerTask "default", ["clean", "coffee:app", "concat:node", "concat:min", "tests"]

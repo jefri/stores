@@ -8,6 +8,8 @@
 FileStore = ->
 	Q = require "q"
 	fs = require "fs"
+	write = Q.denodeify fs.writeFile
+	read = Q.denodeify fs.readFile
 
 	class FileStore extends JEFRi.Stores.ObjectStore
 		constructor: (options)->

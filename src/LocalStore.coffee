@@ -4,7 +4,6 @@
 #     For full details and documentation:
 #     http://jefri.org
 
-
 class LocalStore extends JEFRi.Stores.ObjectStore
 	constructor: (options)->
 		super options

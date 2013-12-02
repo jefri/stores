@@ -1,7 +1,3 @@
-var _ = require("superscore");
-var Q = require("q");
-var JEFRi = require("jefri");
-
 JEFRi.Stores = {};
 
 _(JEFRi).extend({
@@ -476,5 +472,3 @@ FileStore = function() {
 };
 
 JEFRi.store("FileStore", FileStore);
-
-module.exports = JEFRi;

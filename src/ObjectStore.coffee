@@ -117,7 +117,7 @@ class ObjectStore
 						relspec = _.extend {}, spec[name], {_type: relationship.to.type}
 						relspec[relationship.to.property] = entity[relationship.property]
 						# Just going to use
-						@_lookup relspec
+						@_lookup(relspec) || []
 
 					# Giveth, or taketh away
 					if  related.length
