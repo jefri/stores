@@ -41,7 +41,8 @@
     "should": "~1.2.2",
     "grunt-mocha-test": "~0.6.3",
     "chai": "~1.7.2",
-    "underscore": "~1.5.1"
+    "underscore": "~1.5.1",
+    "express": "~3.4.6"
   },
   "licenses": [
     {
