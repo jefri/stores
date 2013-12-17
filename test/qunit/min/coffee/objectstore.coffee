@@ -38,6 +38,7 @@ _jQuery(document).ready ->
 		created: new Date(2012, 1, 17, 15, 34, 5).toJSON()
 		last_ip: "80.234.2.79"
 	]]
+
 	asyncTest "ObjectStore", ->
 		expect 3
 		runtime.ready.done ->
@@ -69,6 +70,48 @@ _jQuery(document).ready ->
 				)).done -> start()
 
 
+	#Store info about a persisted entity so we can then get that entity.
+	aUser = {
+		"id":""
+		"name":""
+	}
+
+	asyncTest "ObjectStore get previously persisted", ->
+		expect 4
+		runtime.ready.done ->
+			store = new JEFRi.Stores.ObjectStore(runtime: runtime)
+			transaction = new JEFRi.Transaction()
+
+			for u in users
+				user = runtime.build "User",
+					name: u[0]
+					address: u[1]
+				authinfo = runtime.build "Authinfo",
+					_.extend {authinfo_id: user.id()}, u[2]
+				user.authinfo = authinfo
+				aUser.id = user.id
+				aUser.name = user.name
+				transaction.add user
+				transaction.add authinfo
+			store.persist(transaction).then ->
+				Q.when(store.get(_type: "User").then((results) ->
+					equal results.entities.length, 3, "Find users."
+				), store.get(
+					_type: "Authinfo"
+					username: "southerd"
+				).then((results) ->
+					equal results.entities.length, 1, "Find southerd."
+				), store.get(
+					_type: "User"
+					user_id: aUser.id
+				).then((results) ->
+					equal results.entities.length, 1, "Found entity by id."
+				), store.get(
+					_type: "User"
+					authinfo: {}
+				).then((results) ->
+					equal results.entities.length, 6, "Included authinfo relations."
+				)).done -> start()
 
 
 

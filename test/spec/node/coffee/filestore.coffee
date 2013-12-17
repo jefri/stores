@@ -2,27 +2,41 @@ chai = require "chai"
 chai.should()
 _ = require "underscore"
 fs = require "fs"
-jefri = require "jefri"
-stores = require "../../../../lib/jefri-stores"
+path = require "path"
+root = path.join __dirname, "..", "..", "..", ".."
+
+JEFRi = require "jefri"
+express = require "express"
+Stores = require "../../../../lib/jefri-stores"
 
 describe "FileStore", ->
 	user = au = runtime = null
 	loaded = done = false
+	server = ->
+	runtime = ->
 
-	beforeEach (done)->
+	beforeEach(done) ->
 		try fs.rmdirSync './.jefri'
-		runtime = new jefri.Runtime "http://souther.co/EntityContext.json"
-		runtime.ready.then (a)->
-			user = runtime.build "User"
-			au = user.authinfo
-			done()
+		app =
+			express()
+				.get '/context.json', (req, res)->
+					res.set "content-type", "application/json"
+					res.sendfile path.join root, "context.json"
+		server = app.listen 3030, ->
+			runtime = new JEFRi.Runtime "http://localhost:3030/context.json"
+			runtime.ready.then (a)->
+				console.log("runtime", runtime)
+				user = runtime.build "User"
+				au = user.authinfo
+				done()
 
 	afterEach (done)->
+		server.close()
 		try fs.rmdirSync './.jefri'
 		done()
 
 	it "saves", (done)->
-		filestore = new jefri.Stores.FileStore runtime: runtime
+		filestore = new Stores.Stores.FileStore runtime: runtime
 		transaction = new jefri.Transaction [user, au]
 		filestore.persist(transaction)
 		.then (transaction)->
@@ -41,7 +55,7 @@ describe "FileStore", ->
 		.finally done
 
 	it "saves nothing", (done)->
-		filestore = new jefri.Stores.FileStore runtime: runtime
+		filestore = new Stores.Stores.FileStore runtime: runtime
 		transaction = new jefri.Transaction []
 		filestore.persist(transaction)
 		.then (transaction)->

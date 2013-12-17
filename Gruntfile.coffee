@@ -62,6 +62,10 @@ module.exports = (grunt) ->
 				options:
 					reporter: 'nyan'
 				src: ["test/spec/node/**/*.coffee"]
+			other:
+				options:
+					reporter: 'nyan'
+				src: ["src/mocha/objectstore.coffee"]
 
 		qunit:
 			min:
@@ -88,7 +92,7 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks "grunt-contrib-concat"
 	grunt.loadNpmTasks "grunt-contrib-clean"
 
-	grunt.registerTask "jasmineTests", ["mochaTest:spec"]
+	grunt.registerTask "jasmineTests", ["mochaTest:other"]
 	grunt.registerTask "qunitTests", ["coffee:qunit", "qunit:min"]
-	grunt.registerTask "tests", ["connect:testing", "qunitTests", "jasmineTests"]
+	grunt.registerTask "tests", ["connect:testing", "jasmineTests"]
 	grunt.registerTask "default", ["clean", "coffee:app", "concat:node", "concat:min", "tests"]
