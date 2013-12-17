@@ -68,10 +68,13 @@ class ObjectStore
 		# Let _lookup handle the actual lookups. Each spec is an `or` op, so flatten then remove duplicates.
 		ents = for entity in transaction.entities
 			@_lookup entity
-		ents = _.flatten ents
+
+		all_entities = {}
+		for set in ents
+			all_entities = _.extend all_entities, set
 		transaction.entities = _.uniq(
 			# The lookup
-			_(ents).filter (it)-> it
+			_(all_entities).filter (it)-> it
 			false,
 			# Uniq based on type.id
 			(it) => it._type + '.' + it[@settings.runtime.definition(it._type).key]
@@ -90,8 +93,9 @@ class ObjectStore
 		# Need the key, properties, and relationships details
 		def = @settings.runtime.definition spec._type
 		# Get everything for this type
-		results = for id in _.keys(@_type(spec._type))
-			JSON.parse @_get @_key spec, id
+		results = {}
+		for id in _.keys(@_type(spec._type))
+			results[id] = JSON.parse @_get @_key spec, id
 
 		# If we didn't find anything, don't return anything. Rule 0.
 		if results.length is 0
