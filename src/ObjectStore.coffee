@@ -70,8 +70,16 @@ class ObjectStore
 		for entity in transaction.entities
 			found = @_lookup entity
 			if _.isArray found
-				found = found.pop()
-			ents.push found
+				if found.length > 1
+					for e in found
+						if e
+							if e.hasOwnProperty "_type"
+								ents.push e
+				else
+					found = found.pop()
+					ents.push found
+			else
+				ents.push found
 
 		all_entities = {}
 		for set in ents
