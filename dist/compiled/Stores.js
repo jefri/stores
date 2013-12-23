@@ -82,22 +82,28 @@ ObjectStore = (function() {
   };
 
   ObjectStore.prototype.do_get = function(transaction) {
-    var all_entities, entity, ents, set, _i, _len,
+    var all_entities, entity, ents, found, set, _i, _j, _len, _len1, _ref,
       _this = this;
-    ents = (function() {
-      var _i, _len, _ref, _results;
-      _ref = transaction.entities;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        entity = _ref[_i];
-        _results.push(this._lookup(entity));
+    ents = [];
+    _ref = transaction.entities;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      entity = _ref[_i];
+      found = this._lookup(entity);
+      if (_.isArray(found)) {
+        found = found.pop();
       }
-      return _results;
-    }).call(this);
+      ents.push(found);
+    }
     all_entities = {};
-    for (_i = 0, _len = ents.length; _i < _len; _i++) {
-      set = ents[_i];
-      all_entities = _.extend(all_entities, set);
+    for (_j = 0, _len1 = ents.length; _j < _len1; _j++) {
+      set = ents[_j];
+      if (set) {
+        if (set.hasOwnProperty("_type")) {
+          all_entities[set._id] = set;
+        } else {
+          all_entities = _.extend(all_entities, set);
+        }
+      }
     }
     transaction.entities = _.uniq(_(all_entities).filter(function(it) {
       return it;
