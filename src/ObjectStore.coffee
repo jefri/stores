@@ -66,12 +66,20 @@ class ObjectStore
 	# Treat the transaction as a lookup. Find all data matching the specs.
 	do_get: (transaction) ->
 		# Let _lookup handle the actual lookups. Each spec is an `or` op, so flatten then remove duplicates.
-		ents = for entity in transaction.entities
-			@_lookup entity
+		ents = []
+		for entity in transaction.entities
+			found = @_lookup entity
+			if _.isArray found
+				found = found.pop()
+			ents.push found
 
 		all_entities = {}
 		for set in ents
-			all_entities = _.extend all_entities, set
+			if set
+				if set.hasOwnProperty "_type"
+					all_entities[set._id] = set
+				else
+					all_entities = _.extend all_entities, set
 		transaction.entities = _.uniq(
 			# The lookup
 			_(all_entities).filter (it)-> it
