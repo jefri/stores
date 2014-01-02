@@ -141,7 +141,6 @@ describe "ObjectStore", ->
 					transaction.entities.length.should.equal 2
 					transaction2 = new JEFRi.Transaction()
 					transaction2.add {_type:"User", user_id:testId, authinfo:{}}
-					debugger;
 					store.get(transaction2)
 					.then (transaction2)->
 						transaction2.hasOwnProperty("entities").should.equal true
@@ -175,7 +174,6 @@ describe "ObjectStore", ->
 					transaction.entities.length.should.equal 3
 					transaction2 = new JEFRi.Transaction()
 					transaction2.add {_type:"User", user_id:testId, authinfo:{}, group:{}}
-					debugger;
 					store.get(transaction2)
 					.then (transaction2)->
 						transaction2.hasOwnProperty("entities").should.equal true
@@ -191,4 +189,42 @@ describe "ObjectStore", ->
 						returnedGroup.name.should.equal "newyorkers"
 						in_array = yes if returnedUser in returnedGroup.users
 						in_array.should.equal true
+						done()
+
+		it "builds, persists and then gets all with relationships in one transaction", (done)->
+			runtime.ready.done ->
+				store = new Stores.ObjectStore runtime: runtime
+				transaction = new JEFRi.Transaction()
+				users = {
+					"newyorkers":[
+						{name: "southerd", address: "davidsouther@gmail.com", gender: "male"}
+						{name: "levinea", address: "annie@levine.com", gender: "female"}
+					]
+					"monuhtanans":[
+						{name: "portaj", address: "jonathan@jonathanporta.com", gender: "male"}
+						{name: "pochaj", address: "jessicapocha@gmail.com", gender: "female"}
+					]
+				}
+				for key,val of users
+					group = runtime.build "Group", {name:key}
+					for u in val
+						user = runtime.build "User", u
+						user.authinfo = runtime.build "Authinfo", {}
+						authinfo = user.authinfo
+						user.group = group
+						transaction.add user, authinfo
+					transaction.add group
+				store.persist(transaction)
+				.then (transaction)->
+					transaction.hasOwnProperty("entities").should.equal true
+					transaction.hasOwnProperty("attributes").should.equal true
+					transaction.entities.length.should.equal 10
+					transaction2 = new JEFRi.Transaction()
+					transaction2.add {_type:"User", group:{}, authinfo:{}}
+					debugger;
+					store.get(transaction2)
+					.then (transaction2)->
+						transaction2.hasOwnProperty("entities").should.equal true
+						transaction2.hasOwnProperty("attributes").should.equal true
+						transaction2.entities.length.should.equal 10
 						done()
