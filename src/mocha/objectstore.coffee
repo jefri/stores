@@ -19,7 +19,6 @@ describe "ObjectStore", ->
 		app.listen 3030, ->
 			runtime = new JEFRi.Runtime "http://localhost:3030/context.json"
 
-#	debugger;
 	describe "Basic Build, Persist and Getting.", ->
 		it "builds and persists two entities", (done)->
 			runtime.ready.done ->
@@ -122,4 +121,35 @@ describe "ObjectStore", ->
 						transaction2.entities.length.should.equal 2
 						transaction2.entities[0].gender.should.equal "female"
 						transaction2.entities[1].gender.should.equal "female"
+						done()
+
+		it "builds, persists and then gets entity by id with relationship entities", (done)->
+			runtime.ready.done ->
+				store = new Stores.ObjectStore runtime: runtime
+				transaction = new JEFRi.Transaction()
+				user = runtime.build "User",
+					name: "southerd"
+					address: "davidsouther@gmail.com"
+				user.authinfo = runtime.build "Authinfo", {}
+				authinfo = user.authinfo
+				transaction.add user, authinfo
+				testId = user.id()
+				store.persist(transaction)
+				.then (transaction)->
+					transaction.hasOwnProperty("entities").should.equal true
+					transaction.hasOwnProperty("attributes").should.equal true
+					transaction.entities.length.should.equal 2
+					transaction2 = new JEFRi.Transaction()
+					transaction2.add {_type:"User", user_id:testId, authinfo:{}}
+					debugger;
+					store.get(transaction2)
+					.then (transaction2)->
+						transaction2.hasOwnProperty("entities").should.equal true
+						transaction2.hasOwnProperty("attributes").should.equal true
+						transaction2.entities.length.should.equal 2
+						returnedUser = if transaction2.entities[0]._type() == "User" then transaction2.entities[0] else transaction2.entities[1]
+						returnedUser.user_id.should.equal testId
+						returnedUser.name.should.equal "southerd"
+						returnedAuth = returnedUser.authinfo
+						returnedAuth._new.should.equal false #checks to make sure that the context didn't "make one up" for ya.
 						done()
