@@ -69,20 +69,21 @@ class ObjectStore
 		ents = []
 		for entity in transaction.entities
 			found = @_lookup entity
-			if _.isArray found
-				if found.length > 1
-					for e in found
-						if e
-							if e.hasOwnProperty "_type"
-								ents.push e
-				else
-					found = found.pop()
-					ents.push found
-			else
-				ents.push found
+
+			widdle = (result)->
+				if result
+					if result.hasOwnProperty "_type"
+						ents.push result
+					else if _.isArray result
+						widdle r for r in result
+					else
+						#Here we will assume we have an obj with IDs for keys.
+						widdle e for id,e of result
+
+			widdle found
 
 		all_entities = {}
-		for set in ents
+		for set in ents #I think at least half this can happen in the widdle function safely.
 			if set
 				if set.hasOwnProperty "_type"
 					all_entities[set._id] = set
@@ -132,7 +133,7 @@ class ObjectStore
 				# For all the entities found so far, include their relationships as well
 				give = []
 				take = []
-				for entity, i in results
+				for i,entity of results
 					related = do =>
 						relspec = _.extend {}, spec[name], {_type: relationship.to.type}
 						relspec[relationship.to.property] = entity[relationship.property]
@@ -141,7 +142,7 @@ class ObjectStore
 
 					# Giveth, or taketh away
 					if  related.length
-						give.push  related
+						give.push related
 					# else
 					# 	take.push i
 				# Remove the indicies which didn't have a relation.
