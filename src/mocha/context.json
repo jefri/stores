@@ -63,6 +63,9 @@
 				"attributes": {
 					"unique": "true"
 				}
+			},
+			"gender": {
+				"type": "string"
 			}
 		},
 		"relationships": {
