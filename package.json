@@ -42,7 +42,8 @@
     "grunt-mocha-test": "~0.6.3",
     "chai": "~1.7.2",
     "underscore": "~1.5.1",
-    "express": "~3.4.6"
+    "express": "~3.4.6",
+    "grunt-jsonlint": "~1.0.4"
   },
   "licenses": [
     {
