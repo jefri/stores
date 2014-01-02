@@ -221,7 +221,6 @@ describe "ObjectStore", ->
 					transaction.entities.length.should.equal 10
 					transaction2 = new JEFRi.Transaction()
 					transaction2.add {_type:"User", group:{}, authinfo:{}}
-					debugger;
 					store.get(transaction2)
 					.then (transaction2)->
 						transaction2.hasOwnProperty("entities").should.equal true
@@ -259,7 +258,6 @@ describe "ObjectStore", ->
 					transaction.entities.length.should.equal 10
 					transaction2 = new JEFRi.Transaction()
 					transaction2.add {_type:"Group", users:{authinfo:{}}}
-					debugger;
 					store.get(transaction2)
 					.then (transaction2)->
 						transaction2.hasOwnProperty("entities").should.equal true
@@ -298,7 +296,6 @@ describe "ObjectStore", ->
 					transaction.entities.length.should.equal 10
 					transaction2 = new JEFRi.Transaction()
 					transaction2.add {_type:"Group", group_id:testId, users:{authinfo:{}}}
-					debugger;
 					store.get(transaction2)
 					.then (transaction2)->
 						transaction2.hasOwnProperty("entities").should.equal true
