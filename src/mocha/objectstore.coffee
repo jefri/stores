@@ -228,3 +228,41 @@ describe "ObjectStore", ->
 						transaction2.hasOwnProperty("attributes").should.equal true
 						transaction2.entities.length.should.equal 10
 						done()
+
+		it "builds, persists and then gets all with relationships in one transaction, nested:{{{}}}", (done)->
+			runtime.ready.done ->
+				store = new Stores.ObjectStore runtime: runtime
+				transaction = new JEFRi.Transaction()
+				users = {
+					"newyorkers":[
+						{name: "southerd", address: "davidsouther@gmail.com", gender: "male"}
+						{name: "levinea", address: "annie@levine.com", gender: "female"}
+					]
+					"monuhtanans":[
+						{name: "portaj", address: "jonathan@jonathanporta.com", gender: "male"}
+						{name: "pochaj", address: "jessicapocha@gmail.com", gender: "female"}
+					]
+				}
+				for key,val of users
+					group = runtime.build "Group", {name:key}
+					for u in val
+						user = runtime.build "User", u
+						user.authinfo = runtime.build "Authinfo", {}
+						authinfo = user.authinfo
+						user.group = group
+						transaction.add user, authinfo
+					transaction.add group
+				store.persist(transaction)
+				.then (transaction)->
+					transaction.hasOwnProperty("entities").should.equal true
+					transaction.hasOwnProperty("attributes").should.equal true
+					transaction.entities.length.should.equal 10
+					transaction2 = new JEFRi.Transaction()
+					transaction2.add {_type:"Group", users:{authinfo:{}}}
+					debugger;
+					store.get(transaction2)
+					.then (transaction2)->
+						transaction2.hasOwnProperty("entities").should.equal true
+						transaction2.hasOwnProperty("attributes").should.equal true
+						transaction2.entities.length.should.equal 10
+						done()
