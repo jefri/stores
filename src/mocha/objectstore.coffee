@@ -308,21 +308,20 @@ describe "ObjectStore", ->
 				store = new Stores.ObjectStore runtime: runtime
 				transaction = new JEFRi.Transaction()
 				mainGroup = runtime.build "Group", {name:"Main Group"}
+				mainGroup.subgroups.length.should.equal 0
 
 				subGroup1 = runtime.build "Group", {name:"Sub Group 1"}
 				subGroup2 = runtime.build "Group", {name:"Sub Group 2"}
 
-				should.not.exist mainGroup.subgroups
-
 				subGroup3 = runtime.build "Group", {name:"Sub Group 3", parent:mainGroup} #doesn't work! not sure if this should work. I don't think specs should be more than just that, a spec. If full entities are being included in a spec, I am not sure that is a good way to go.
 
-				should.not.exist mainGroup.subgroups
+				mainGroup.subgroups.length.should.equal 0
 
 				subGroup4 = runtime.build "Group", {name:"Sub Group 4", parent_id:mainGroup.id()} #doesn't work prior to a persist. Build should probably be smart enough to handle this case. It will be resolved once the entity is persisted and reborn in the runtime.
-				should.not.exist mainGroup.subgroups
+				mainGroup.subgroups.length.should.equal 0
 
 				mainGroup.subgroups = subGroup1
-				should.exist mainGroup.subgroups
+				mainGroup.subgroups.length.should.equal 1
 
 				subGroup2.parent = mainGroup
 				mainGroup.subgroups.length.should.equal 2 #Setting a side should set both sides. This is probably because there is only one side of the relationship defined in the context. Either, we can define both, or, just work this in as an edgecase in our muttaccs.
