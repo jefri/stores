@@ -35,6 +35,15 @@
 					"property": "group_id"
 				},
 				"back": "subgroups"
+			},
+			"subgroups": {
+				"type": "has_many",
+				"property": "group_id",
+				"to": {
+					"type": "Group",
+					"property": "parent_id"
+				},
+				"back": "subgroups"
 			}
 		},
 		"attributes": {
