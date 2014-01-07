@@ -65,37 +65,33 @@ class ObjectStore
 	# ### do_get*(transaction)*
 	# Treat the transaction as a lookup. Find all data matching the specs.
 	do_get: (transaction) ->
-		# Let _lookup handle the actual lookups. Each spec is an `or` op, so flatten then remove duplicates.
-		ents = []
+		# Let _lookup handle the actual lookups.
+		# _lookup can return an array, a single entity, or an object of id->entity kvs.
+		# We lookup each spec and then add it to a keyed object to kill off duplicates as we go.
+		ents = {}
 		for entity in transaction.entities
+			# Do the lookup for each spec
 			found = @_lookup entity
 
+			# Recursive function to handle the multitude of possible return values from _lookup.
 			whittle = (result)->
 				if result
+					# Sometimes the result is undefined, or empty. We'll ignore those.
 					if result.hasOwnProperty "_type"
-						ents.push result
+						# We're going to assume that it is a real entity if it has _type.
+						ents[result._id] = result
 					else if _.isArray result
+						# We have an array, it could be entities, or more arrays! Who knows?
 						whittle r for r in result
 					else
-						#Here we will assume we have an obj with IDs for keys.
+						# Here we will assume we have an obj with IDs for keys.
 						whittle e for id,e of result
 
 			whittle found
 
-		all_entities = {}
-		for set in ents #I think at least half this can happen in the whittle function safely.
-			if set
-				if set.hasOwnProperty "_type"
-					all_entities[set._id] = set
-				else
-					all_entities = _.extend all_entities, set
-		transaction.entities = _.uniq(
-			# The lookup
-			_(all_entities).filter (it)-> it
-			false,
-			# Uniq based on type.id
-			(it) => it._type + '.' + it[@settings.runtime.definition(it._type).key]
-		)
+		# Convert our k/v obj of results to an array for the transaction
+		transaction.entities = _.toArray ents
+		#return the transaction
 		transaction
 
 	# #### _find*(entity)*
