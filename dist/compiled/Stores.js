@@ -82,14 +82,14 @@ ObjectStore = (function() {
   };
 
   ObjectStore.prototype.do_get = function(transaction) {
-    var all_entities, entity, ents, found, set, widdle, _i, _j, _len, _len1, _ref,
+    var all_entities, entity, ents, found, set, whittle, _i, _j, _len, _len1, _ref,
       _this = this;
     ents = [];
     _ref = transaction.entities;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       entity = _ref[_i];
       found = this._lookup(entity);
-      widdle = function(result) {
+      whittle = function(result) {
         var e, id, r, _j, _len1, _results, _results1;
         if (result) {
           if (result.hasOwnProperty("_type")) {
@@ -98,20 +98,20 @@ ObjectStore = (function() {
             _results = [];
             for (_j = 0, _len1 = result.length; _j < _len1; _j++) {
               r = result[_j];
-              _results.push(widdle(r));
+              _results.push(whittle(r));
             }
             return _results;
           } else {
             _results1 = [];
             for (id in result) {
               e = result[id];
-              _results1.push(widdle(e));
+              _results1.push(whittle(e));
             }
             return _results1;
           }
         }
       };
-      widdle(found);
+      whittle(found);
     }
     all_entities = {};
     for (_j = 0, _len1 = ents.length; _j < _len1; _j++) {
