@@ -70,20 +70,20 @@ class ObjectStore
 		for entity in transaction.entities
 			found = @_lookup entity
 
-			widdle = (result)->
+			whittle = (result)->
 				if result
 					if result.hasOwnProperty "_type"
 						ents.push result
 					else if _.isArray result
-						widdle r for r in result
+						whittle r for r in result
 					else
 						#Here we will assume we have an obj with IDs for keys.
-						widdle e for id,e of result
+						whittle e for id,e of result
 
-			widdle found
+			whittle found
 
 		all_entities = {}
-		for set in ents #I think at least half this can happen in the widdle function safely.
+		for set in ents #I think at least half this can happen in the whittle function safely.
 			if set
 				if set.hasOwnProperty "_type"
 					all_entities[set._id] = set
