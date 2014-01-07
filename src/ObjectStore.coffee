@@ -133,7 +133,7 @@ class ObjectStore
 				# For all the entities found so far, include their relationships as well
 				give = []
 				take = []
-				for i,entity of results
+				for i, entity of results
 					related = do =>
 						relspec = _.extend {}, spec[name], {_type: relationship.to.type}
 						relspec[relationship.to.property] = entity[relationship.property]
