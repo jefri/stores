@@ -65,17 +65,33 @@ class ObjectStore
 	# ### do_get*(transaction)*
 	# Treat the transaction as a lookup. Find all data matching the specs.
 	do_get: (transaction) ->
-		# Let _lookup handle the actual lookups. Each spec is an `or` op, so flatten then remove duplicates.
-		ents = for entity in transaction.entities
-			@_lookup entity
-		ents = _.flatten ents
-		transaction.entities = _.uniq(
-			# The lookup
-			_(ents).filter (it)-> it
-			false,
-			# Uniq based on type.id
-			(it) => it._type + '.' + it[@settings.runtime.definition(it._type).key]
-		)
+		# Let _lookup handle the actual lookups.
+		# _lookup can return an array, a single entity, or an object of id->entity kvs.
+		# We lookup each spec and then add it to a keyed object to kill off duplicates as we go.
+		ents = {}
+		for entity in transaction.entities
+			# Do the lookup for each spec
+			found = @_lookup entity
+
+			# Recursive function to handle the multitude of possible return values from _lookup.
+			whittle = (result)->
+				if result
+					# Sometimes the result is undefined, or empty. We'll ignore those.
+					if result.hasOwnProperty "_type"
+						# We're going to assume that it is a real entity if it has _type.
+						ents[result._id] = result
+					else if _.isArray result
+						# We have an array, it could be entities, or more arrays! Who knows?
+						whittle r for r in result
+					else
+						# Here we will assume we have an obj with IDs for keys.
+						whittle e for id,e of result
+
+			whittle found
+
+		# Convert our k/v obj of results to an array for the transaction
+		transaction.entities = _.toArray ents
+		#return the transaction
 		transaction
 
 	# #### _find*(entity)*
@@ -90,8 +106,9 @@ class ObjectStore
 		# Need the key, properties, and relationships details
 		def = @settings.runtime.definition spec._type
 		# Get everything for this type
-		results = for id in _.keys(@_type(spec._type))
-			JSON.parse @_get @_key spec, id
+		results = {}
+		for id in _.keys(@_type(spec._type))
+			results[id] = JSON.parse @_get @_key spec, id
 
 		# If we didn't find anything, don't return anything. Rule 0.
 		if results.length is 0
@@ -112,7 +129,7 @@ class ObjectStore
 				# For all the entities found so far, include their relationships as well
 				give = []
 				take = []
-				for entity, i in results
+				for i, entity of results
 					related = do =>
 						relspec = _.extend {}, spec[name], {_type: relationship.to.type}
 						relspec[relationship.to.property] = entity[relationship.property]
@@ -121,7 +138,7 @@ class ObjectStore
 
 					# Giveth, or taketh away
 					if  related.length
-						give.push  related
+						give.push related
 					# else
 					# 	take.push i
 				# Remove the indicies which didn't have a relation.

@@ -56,12 +56,19 @@ module.exports = (grunt) ->
 			testing:
 				root: '.'
 				port: 8000
+		jsonlint:
+			test_context:
+				src: ['src/mocha/context.json']
 
 		mochaTest:
 			spec:
 				options:
 					reporter: 'nyan'
 				src: ["test/spec/node/**/*.coffee"]
+			other:
+				options:
+					reporter: 'nyan'
+				src: ["src/mocha/objectstore.coffee"]
 
 		qunit:
 			min:
@@ -87,8 +94,10 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks "grunt-contrib-connect"
 	grunt.loadNpmTasks "grunt-contrib-concat"
 	grunt.loadNpmTasks "grunt-contrib-clean"
+	grunt.loadNpmTasks "grunt-jsonlint"
 
-	grunt.registerTask "jasmineTests", ["mochaTest:spec"]
+	grunt.registerTask "lint", ["jsonlint:test_context"]
+	grunt.registerTask "jasmineTests", ["mochaTest:other"]
 	grunt.registerTask "qunitTests", ["coffee:qunit", "qunit:min"]
-	grunt.registerTask "tests", ["connect:testing", "qunitTests", "jasmineTests"]
-	grunt.registerTask "default", ["clean", "coffee:app", "concat:node", "concat:min", "tests"]
+	grunt.registerTask "tests", ["connect:testing", "jasmineTests"]
+	grunt.registerTask "default", ["clean", "lint", "coffee:app", "concat:node", "concat:min", "tests"]

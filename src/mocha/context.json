@@ -1,0 +1,219 @@
+{ "attributes": {}, "entities": {
+	"Group": {
+		"key": "group_id",
+		"properties": {
+			"group_id": {
+				"type": "string",
+				"attributes": {
+					"primary": "true"
+				}
+			},
+			"parent_id": {
+				"type": "string",
+				"attributes": {}
+			},
+			"name": {
+				"type": "string",
+				"attributes": {}
+			}
+		},
+		"relationships": {
+			"users": {
+				"type": "has_many",
+				"property": "group_id",
+				"to": {
+					"type": "User",
+					"property": "group_id"
+				},
+				"back": "group"
+			},
+			"parent": {
+				"type": "has_a",
+				"property": "parent_id",
+				"to": {
+					"type": "Group",
+					"property": "group_id"
+				},
+				"back": "subgroups"
+			},
+			"subgroups": {
+				"type": "has_many",
+				"property": "group_id",
+				"to": {
+					"type": "Group",
+					"property": "parent_id"
+				},
+				"back": "subgroups"
+			}
+		},
+		"attributes": {
+			"vname": "groups"
+		}
+	},
+	"User": {
+		"key": "user_id",
+		"properties": {
+			"user_id": {
+				"type": "int",
+				"attributes": {
+					"primary": "true"
+				}
+			},
+			"group_id": {
+				"type": "string",
+				"attributes": {}
+			},
+			"name": {
+				"type": "string",
+				"attributes": {}
+			},
+			"address": {
+				"type": "string",
+				"attributes": {
+					"unique": "true"
+				}
+			},
+			"gender": {
+				"type": "string"
+			}
+		},
+		"relationships": {
+			"authinfo": {
+				"type": "has_a",
+				"property": "user_id",
+				"to": {
+					"type": "Authinfo",
+					"property": "user_id"
+				},
+				"back": "user"
+			},
+			"group": {
+				"type": "has_a",
+				"property": "group_id",
+				"to": {
+					"type": "Group",
+					"property": "group_id"
+				},
+				"back": "group"
+			}
+		},
+		"attributes": {
+			"vname": "users"
+		}
+	},
+	"Authinfo": {
+		"key": "authinfo_id",
+		"properties": {
+			"authinfo_id": {
+				"type": "int",
+				"attributes": {
+					"primary": "true"
+				}
+			},
+			"user_id": {
+				"type": "int",
+				"attributes": {}
+			},
+			"username": {
+				"type": "string",
+				"attributes": {
+					"length": "45"
+				}
+			},
+			"password": {
+				"type": "string",
+				"attributes": {
+					"length": "45"
+				}
+			},
+			"activated": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"banned": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"ban_reason": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"new_password_key": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"new_password_requested": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"new_email": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"new_email_key": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"last_ip": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"last_login": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"created": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			},
+			"modified": {
+				"type": "string",
+				"attributes": {
+					"nullable": "true",
+					"length": "45"
+				}
+			}
+		},
+		"relationships": {
+			"user": {
+				"type": "has_a",
+				"property": "user_id",
+				"to": {
+					"type": "User",
+					"property": "user_id"
+				},
+				"back": "authinfo"
+			}
+		}
+	}
+}}
