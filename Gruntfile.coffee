@@ -8,96 +8,102 @@ module.exports = (grunt) ->
 
 	grunt.initConfig
 		pkg: grunt.file.readJSON 'package.json'
-		meta:
-			banner: 
-				"// <%= pkg.title || pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today(\"yyyy-mm-dd\") %>\n
-				<%= pkg.homepage ? \"// \" + pkg.homepage + \"\n\" : \"\" %>
-				// Copyright (c) <%= grunt.template.today(\"yyyy\") %> <%= pkg.author.name %>;
-				Licensed <%= _.pluck(pkg.licenses, \"type\").join(\", \") %>"
+		# meta:
+		# 	banner: 
+		# 		"// <%= pkg.title || pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today(\"yyyy-mm-dd\") %>\n
+		# 		<%= pkg.homepage ? \"// \" + pkg.homepage + \"\n\" : \"\" %>
+		# 		// Copyright (c) <%= grunt.template.today(\"yyyy\") %> <%= pkg.author.name %>;
+		# 		Licensed <%= _.pluck(pkg.licenses, \"type\").join(\", \") %>"
 
 		clean:
 			app:
 				src: ["dist", "docs"]
 
-		coffee:
-			app:
-				files:
-					"dist/compiled/Stores.js": [
-						"src/Stores.coffee"
-						"src/ObjectStore.coffee"
-						"src/LocalStore.coffee"
-						"src/PostStore.coffee"
-						"src/FileStore.coffee"
-					]
-				options:
-					bare: true
-
-			qunit:
-				files: [
-					coffees "test/qunit/min/coffee/", "test/qunit/min/coffee/compiled/"
-				]
-				options:
-					bare: true
-
-		concat:
-			node:
-				src: ["<banner:meta.banner>", "src/node/pre.js", "src/PostStore.js", "dist/compiled/Stores.js", "src/node/post.js"]
-				dest: "lib/<%= pkg.name %>.js"
-
-			min:
-				src: ["<banner:meta.banner>", "src/min/pre.js", "src/PostStore.js", "dist/compiled/Stores.js", "src/min/post.js"]
-				dest: "lib/<%= pkg.name %>.min.js"
-
-			qunitMin:
-				src: ["test/qunit/min/js/*.js", "test/qunit/min/coffee/tests.js"]
-				dest: "test/qunit/min/tests.js"
-
-		connect:
-			testing:
-				root: '.'
-				port: 8000
-		jsonlint:
-			test_context:
-				src: ['src/mocha/context.json']
-
 		mochaTest:
 			spec:
 				options:
-					reporter: 'nyan'
-				src: ["test/spec/node/**/*.coffee"]
-			other:
-				options:
-					reporter: 'nyan'
-				src: ["src/mocha/objectstore.coffee"]
-
-		qunit:
-			min:
-				options:
-					urls: ["http://localhost:8000/test/qunit/min/qunit.html"]
+					reporter: 'spec'
+				src: ["test/node/**/*.coffee"]
 
 		uglify:
 			dist:
-				src: ["<banner:meta.banner>", "<config:concat.dist.dest>"]
-				dest: "lib/<%= pkg.name %>.min.js"
+				src: ['<banner:meta.banner>', './lib/<%= pkg.name %>.js']
+				dest: 'lib/<%= pkg.name %>.min.js'
 
-		watch:
-			app:
-				files: ["src/*coffee", "test/**/*"]
-				tasks: ["default"]
+		webpack:
+			stores:
+				entry: './src/browser.js'
+				output:
+					filename: './lib/<%= pkg.name %>.js'
+				resolve:
+					extensions: ['', ".js", ".coffee"]
+				module:
+					loaders: [
+						{ test: /\.coffee$/, loader: 'coffee-loader' }
+					]
+
+		karma:
+			options:
+				browsers: do ->
+					# butt - Browser Under Test Tools
+					butt = []
+					unless process.env.DEBUG
+						if process.env.BAMBOO
+							butt.push 'PhantomJS'
+						else if process.env.TRAVIS
+							butt.push 'Firefox'
+						else
+							butt.push 'Chrome'
+					butt
+				frameworks: [ 'mocha', 'sinon-chai' ]
+				reporters: [ 'spec', 'junit', 'coverage' ]
+				singleRun: true,
+				logLevel: 'INFO'
+				preprocessors:
+					'test/**/*.coffee': [ 'coffee' ]
+				junitReporter:
+					outputFile: 'build/reports/karma.xml'
+				coverageReporter:
+					type: 'lcov'
+					dir: 'build/reports/coverage/'
+			client:
+				options:
+					files: [
+						'node_modules/jefri/lib/jefri.min.js',
+						'node_modules/q/q.js',
+						'lib/<%= pkg.name %>.js',
+						'test/karma/**/*.coffee'
+					]
+			min:
+				options:
+					files: [
+						'node_modules/jefri/lib/jefri.min.js',
+						'node_modules/q/q.js',
+						'lib/<%= pkg.name %>.min.js',
+						'test/karma/**/*.coffee'
+					]
+
+	grunt.registerTask "connect", (grunt)->
+		mount = require('st')({ path: __dirname + '/test/contexts', url: '/' })
+		require('http').createServer (req, res)->
+			res.setHeader 'Access-Control-Allow-Origin', '*'
+			res.setHeader 'Access-Control-Allow-Credentials', true
+			res.setHeader 'Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept'
+			res.setHeader 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS'
+			if (mount(req, res))
+				return
+			else
+				res.end('this is not a static file')
+		.listen(8000)
 
 	grunt.loadNpmTasks "grunt-mocha-test"
 	grunt.loadNpmTasks "grunt-contrib-watch"
-	grunt.loadNpmTasks "grunt-contrib-qunit"
-	grunt.loadNpmTasks "grunt-contrib-nodeunit"
 	grunt.loadNpmTasks "grunt-contrib-uglify"
-	grunt.loadNpmTasks "grunt-contrib-coffee"
-	grunt.loadNpmTasks "grunt-contrib-connect"
 	grunt.loadNpmTasks "grunt-contrib-concat"
 	grunt.loadNpmTasks "grunt-contrib-clean"
 	grunt.loadNpmTasks "grunt-jsonlint"
+	grunt.loadNpmTasks "grunt-webpack"
+	grunt.loadNpmTasks "grunt-karma"
 
-	grunt.registerTask "lint", ["jsonlint:test_context"]
-	grunt.registerTask "jasmineTests", ["mochaTest:other"]
-	grunt.registerTask "qunitTests", ["coffee:qunit", "qunit:min"]
-	grunt.registerTask "tests", ["connect:testing", "jasmineTests"]
-	grunt.registerTask "default", ["clean", "lint", "coffee:app", "concat:node", "concat:min", "tests"]
+	grunt.registerTask "lint", []
+	grunt.registerTask "default", ["clean", "lint", "connect", "mochaTest", "webpack", "karma:client", "uglify", "karma:min"]

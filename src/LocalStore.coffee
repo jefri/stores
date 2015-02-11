@@ -4,7 +4,9 @@
 #     For full details and documentation:
 #     http://jefri.org
 
-class LocalStore extends JEFRi.Stores.ObjectStore
+ObjectStore = require('./ObjectStore')
+
+class LocalStore extends ObjectStore
 	constructor: (options)->
 		super options
 
@@ -17,4 +19,4 @@ class LocalStore extends JEFRi.Stores.ObjectStore
 	_key: (entity, id = entity._id)->
 		super(entity, id).replace '/', '.'
 
-JEFRi.store "LocalStore", -> LocalStore
+module.exports = LocalStore

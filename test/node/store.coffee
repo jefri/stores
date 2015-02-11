@@ -1,11 +1,11 @@
 require "should"
 jefri = require "jefri"
-stores = require "../../../../lib/jefri-stores"
+ObjectStore = require("../../src/server").ObjectStore
 
 describe "JEFRi ObjectStore", ->
-	it "Returns deeply nested graphs", (done)->
-		runtime = new jefri.Runtime "http://localhost:8000/test/qunit/min/context/jefri.json"
-		s = new jefri.Stores.ObjectStore {runtime: runtime}
+	it.only "Returns deeply nested graphs", (done)->
+		runtime = new jefri.Runtime "http://localhost:8000/context.json"
+		s = new ObjectStore {runtime: runtime}
 		runtime.ready.then ->
 			transaction = new jefri.Transaction()
 
@@ -30,3 +30,6 @@ describe "JEFRi ObjectStore", ->
 				s.get(transaction) .then (data)->
 					data.entities.length.should.equal 12, "Got all entities back."
 					done()
+				.catch done
+			.catch done
+		.catch done
