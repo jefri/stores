@@ -4,14 +4,17 @@
 #     For all details and documentation:
 #     http:#jefri.org
 
+jiffies = require('jefri-jiffies')
+Request = jiffies.request
+Promise = jiffies.promise
+
 # ### PostStore
 #
 # Handles POSTing a transaction to a remote JEFRi instance.
-
 module.exports = class PostStore
 	constructor: (options)->
 		@settings = { version: "1.0", size: Math.pow(2, 16) }
-		_.extend @settings, options
+		Object.assign @settings, options
 		if not @settings.runtime
 			throw {message: "LocalStore instantiated without runtime to reference."}
 
@@ -30,17 +33,19 @@ module.exports = class PostStore
 			@get = @persist = (transaction)->
 				transaction.entities = []
 				# _.trigger transaction, "gotten"
-				Q.Defer().resolve(transaction).promise
+				promise = Promise()
+				promise(true, transaction)
+				promise
 
 	_send: (url, transaction, pre, post)=>
 		# _.trigger(transaction, pre);
 		# _.trigger(self, pre, transaction);
 		# _.trigger(self, 'sending', transaction);
 		Request.post url,
-			data    : transaction.toString()
+			data: transaction.toString()
 			dataType: "application/json"
 		.then (data)=>
-			if _(data).isString()
+			if Object.isString(data)
 				data = JSON.parse data
 			# Always updateOnIntern
 			@settings.runtime.expand data

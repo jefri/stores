@@ -30,7 +30,6 @@ class ObjectStore extends jiffies.Event
 		transaction = _transactify transaction
 		@emit "sending", transaction
 
-		debugger
 		@["do_#{type}"] transaction
 		@settings.runtime.expand transaction
 
@@ -123,7 +122,7 @@ class ObjectStore extends jiffies.Event
 		# Otherwise get it to an array.
 		if def.key of spec
 			results = results.filter (e)-> e._id is spec[def.key]
-				 
+
 
 		# Filter based on property specifications
 		for name, property of def.properties
@@ -237,5 +236,5 @@ class ObjectStore extends jiffies.Event
 		if not Function.isFunction(transaction.encode)
 			transaction = new JEFRi.Transaction transaction
 		transaction.encode()
-		
+
 module.exports =  ObjectStore
