@@ -104,6 +104,7 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks "grunt-jsonlint"
 	grunt.loadNpmTasks "grunt-webpack"
 	grunt.loadNpmTasks "grunt-karma"
+	grunt.loadNpmTasks "grunt-release"
 
 	grunt.registerTask "lint", []
 	grunt.registerTask "default", ["clean", "lint", "connect", "mochaTest", "webpack", "karma:client", "uglify", "karma:min"]
