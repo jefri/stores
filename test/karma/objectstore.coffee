@@ -22,7 +22,7 @@ describe "Object Storage", ->
 				equal transaction.entities.length, 2, "Transaction should only have 2 entities."
 				nkeys = Object.keys(transaction.entities[0])
 				nkeys.sort().should.deep.equal [
-					"_id", "_fields", "_relationships", "_modified", "_new", "_runtime", "_listeners"
+					"_id", "_fields", "_relationships", "_modified", "_new", "_runtime", "_events"
 				].sort(), "Entity has expected keys."
 				done()
 			.catch done
@@ -135,5 +135,3 @@ describe "Object Storage", ->
 				).then -> done()
 			.catch done
 		.catch done
-
-

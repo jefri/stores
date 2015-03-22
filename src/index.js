@@ -1,4 +1,3 @@
-
 module.exports = {
 	ObjectStore: require('./ObjectStore'),
 	CouchStore: require('./CouchStore'),

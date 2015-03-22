@@ -1,6 +1,6 @@
 require "should"
 jefri = require "jefri"
-ObjectStore = require("../../src/server").ObjectStore
+ObjectStore = require("../../src/index").ObjectStore
 
 describe "JEFRi ObjectStore", ->
 	it.only "Returns deeply nested graphs", (done)->

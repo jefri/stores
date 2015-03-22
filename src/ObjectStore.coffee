@@ -5,6 +5,7 @@
 #     http://jefri.org
 
 jiffies = require('jefri-jiffies')
+JEFRi = require('jefri')
 
 class ObjectStore extends jiffies.Event
 	constructor: (options)->
@@ -33,9 +34,9 @@ class ObjectStore extends jiffies.Event
 		@["do_#{type}"] transaction
 		@settings.runtime.expand transaction
 
-		promise = jiffies.promise()
-		promise(true, transaction)
-		promise
+		d = jiffies.promise.defer()
+		d.resolve(transaction)
+		d.promise
 
 	# #### get*(transaction)*
 	# Execute as a `get` transaction.

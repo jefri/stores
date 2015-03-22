@@ -2,17 +2,16 @@
   "name": "jefri-stores",
   "title": "JEFRi Persistence Stores",
   "homepage": "http://www.jefri.org",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "author": {
     "name": "David Souther",
     "email": "<davidsouther@gmail.com>"
   },
   "description": "A collection of persistence stores for a JEFRi runtime.",
-  "files": [
-    "lib/",
-    "package.json"
-  ],
-  "main": "./lib/jefri-stores",
+  "main": "./src/index.js",
+  "browser": {
+    "./src/index.js": "./src/browser.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DavidSouther/JEFRi.git"

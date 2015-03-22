@@ -7,7 +7,7 @@ root = path.join __dirname, "..", ".."
 
 JEFRi = require "jefri"
 express = require "express"
-FileStore = require("#{root}/src/server").FileStore
+FileStore = require("#{root}/src/index").FileStore
 
 describe "FileStore", ->
 	user = au = runtime = null
