@@ -136,12 +136,22 @@ class ObjectStore extends jiffies.Event
 				# For all the entities found so far, include their relationships as well
 				give = []
 				take = []
-				for i, entity of results
+				for entity in results
 					related = do =>
-						relspec = Object.assign {}, spec[name], {_type: relationship.to.type}
-						relspec[relationship.to.property] = entity[relationship.property]
-						# Just going to use
-						@_lookup(relspec) || []
+						if "list" is def.properties[relationship.property].type
+							entity[relationship.property].map (other)=>
+								relspec = {_type: relationship.to.type}
+								relspec[relationship.to.property] = other
+								# Just going to use
+								@_lookup(relspec)
+							.filter (_)->
+								_.length > 0
+							.reduce ((_, __)-> _.concat __), []
+						else
+							relspec = Object.assign {}, spec[name], {_type: relationship.to.type}
+							relspec[relationship.to.property] = entity[relationship.property]
+							# Just going to use
+							@_lookup(relspec)
 
 					# Giveth, or taketh away
 					if  related.length

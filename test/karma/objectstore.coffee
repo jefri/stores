@@ -135,3 +135,59 @@ describe "Object Storage", ->
 				).then -> done()
 			.catch done
 		.catch done
+
+	it "has_list", (done)->
+		"Testing has_list relationship persist and retrieve."
+		runtime = new JEFRi.Runtime "",
+			debug:
+				context:
+					entities:
+						Foo:
+							key: "foo_id"
+							properties:
+								foo_id:
+									type: "string"
+								bar_ids:
+									type: "list"
+							relationships:
+								bars:
+									type: "has_many"
+									property: "bar_ids"
+									to:
+										type: "Bar"
+										property: "bar_id"
+						Bar:
+							key: "bar_id"
+							properties:
+								bar_id:
+									type: "string"
+
+		foo = runtime.build("Foo")
+
+		bars = [
+			runtime.build("Bar"),
+			runtime.build("Bar"),
+			runtime.build("Bar")
+		]
+		foo.bars = bars
+		foo.bars.add runtime.build("Bar")
+		ok foo.bars.length, 4, 'Entity was added.'
+		ok foo.bar_ids.length, 4, 'Has all IDs.'
+
+		store = new JEFRi.Stores.ObjectStore(runtime: runtime)
+		transaction = new JEFRi.Transaction()
+		transaction.add foo
+		foo.bars.map (bar)-> transaction.add bar
+
+		store.persist(transaction)
+		.then ->
+			Q.when(
+				store.get(
+					_type: "Foo"
+					bars: {}
+				).then((results) ->
+					debugger
+					equal results.entities.length, 5, "Found foos and bars."
+				)
+			).then -> done()
+		.catch done
