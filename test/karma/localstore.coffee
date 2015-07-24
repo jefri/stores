@@ -67,7 +67,7 @@ describe "Local Storage", ->
 
 			store.persist(transaction)
 			.then ->
-				Q.when(
+				Q.all(
 					store.get(_type: "User")
 					.then((results) ->
 						equal results.entities.length, 3, "Find users."
