@@ -8,7 +8,8 @@
     "email": "<davidsouther@gmail.com>"
   },
   "description": "A collection of persistence stores for a JEFRi runtime.",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
   "browser": {
     "./src/index.js": "./src/browser.js"
   },
@@ -22,47 +23,26 @@
     "entity framework"
   ],
   "scripts": {
-    "test": "./node_modules/.bin/grunt"
+    "format": "checkscripts.sh",
+    "build": "rm -rf build/ lib/ && tsc && webpack build/test/**/*.js build/tests.js",
+    "pretest": "npm run format ; npm run build",
+    "test": "mocha build/test/spec/*.js && karma start karma.config.js"
   },
   "dependencies": {
     "jefri": "~1.2.3",
     "jefri-jiffies": "^0.1.1"
   },
   "devDependencies": {
-    "chai": "~1.7.2",
-    "coffee-loader": "^0.7.2",
-    "coffee-script": "^1.9.0",
-    "express": "~3.4.6",
-    "grunt": "~0.4.1",
-    "grunt-contrib-clean": "~0.5.0",
-    "grunt-contrib-coffee": "~0.7.0",
-    "grunt-contrib-concat": "~0.3.0",
-    "grunt-contrib-connect": "~0.3.0",
-    "grunt-contrib-nodeunit": "~0.2.0",
-    "grunt-contrib-qunit": "~0.2.2",
-    "grunt-contrib-uglify": "~0.2.2",
-    "grunt-contrib-watch": "~0.5.0",
-    "grunt-jasmine-node": "~0.1.0",
-    "grunt-jsonlint": "~1.0.4",
-    "grunt-karma": "^0.10.1",
-    "grunt-mocha-test": "~0.6.3",
-    "grunt-release": "^0.11.0",
-    "grunt-webpack": "^1.0.8",
-    "karma": "^0.12.31",
-    "karma-chrome-launcher": "^0.1.7",
-    "karma-coffee-preprocessor": "^0.2.1",
-    "karma-coverage": "^0.2.7",
-    "karma-firefox-launcher": "^0.1.4",
-    "karma-junit-reporter": "^0.2.2",
-    "karma-mocha": "^0.1.10",
-    "karma-sinon-chai": "^0.3.0",
-    "karma-spec-reporter": "0.0.16",
-    "q": "^0.9.7",
-    "should": "~1.2.2",
-    "st": "^0.5.2",
-    "underscore": "~1.5.1",
-    "webpack": "^1.5.3",
-    "webpack-dev-server": "^1.7.0"
+    "chai": "^3.4.1",
+    "glob": "^6.0.1",
+    "karma": "^0.13.15",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^0.2.1",
+    "karma-mocha": "^0.2.1",
+    "karma-spec-reporter": "0.0.22",
+    "mocha": "^2.3.4",
+    "typescript": "^1.6.2",
+    "webpack": "^1.12.8"
   },
   "licenses": [
     {
