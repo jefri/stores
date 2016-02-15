@@ -1,17 +1,26 @@
 import {expect} from 'chai';
-import {Runtime, Transaction} from 'jefri';
+import {
+  ITransaction,
+  EntitySpec,
+  AnyEntity,
+  BareEntity,
+  Entity,
+  Runtime,
+  Transaction
+} from 'jefri';
 
 import {ObjectStore} from '../../src/index';
 
 describe("JEFRi ObjectStore", function() {
+  let runtime: Runtime = null;
   beforeEach(function(done) {
-    let runtime = new Runtime(
+    runtime = new Runtime(
         "https://raw.githubusercontent.com/jefri/stores/master/test/contexts/context.json");
     runtime.ready.then(() => done(), done);
   });
   it("Returns deeply nested graphs", function(done) {
-    let s = new ObjectStore({runtime: Runtime});
-    let transaction = new Transaction();
+    let s = new ObjectStore(runtime);
+    let transaction = new Transaction<BareEntity>();
     transaction.add([
       {
         "_type": "Context",
@@ -117,16 +126,16 @@ describe("JEFRi ObjectStore", function() {
       }
     ]);
     s.persist(transaction)
-        .then(function(data) {
-          transaction = new Transaction();
-          transaction.add([
+        .then(function(data: ITransaction<Entity>) {
+          let getTransaction = new Transaction<EntitySpec>();
+          getTransaction.add([
             {
               "_type": "Context",
               "entities": {"properties": {}, "relationships": {}}
             }
           ]);
-          s.get(transaction)
-              .then(function(data) {
+          s.get(getTransaction)
+              .then(function(data: ITransaction<Entity>) {
                 expect(data.entities.length)
                     .to.equal(12, "Got all entities back.");
                 done();

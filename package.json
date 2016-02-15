@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "format": "checkscripts.sh",
-    "build": "rm -rf build/ lib/ && tsc && webpack build/test/**/*.js build/tests.js",
+    "build": "rm -rf build/ lib/ && tsc && babel build -d build && cp -a build/src lib && webpack build/test/**/*.js build/tests.js",
     "pretest": "npm run format ; npm run build",
     "test": "mocha build/test/spec/*.js && karma start karma.config.js"
   },
@@ -33,6 +33,9 @@
     "jefri-jiffies": "^0.1.1"
   },
   "devDependencies": {
+    "babel": "^6.0.0",
+    "babel-cli": "^6.0.0",
+    "babel-preset-es2015": "^6.0.0",
     "chai": "^3.4.1",
     "glob": "^6.0.1",
     "karma": "^0.13.15",

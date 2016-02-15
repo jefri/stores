@@ -1,75 +1,9 @@
-#     JEFRi LocalStore.coffee 0.1.0
-#     (c) 2011-2012 David Souther
-#     JEFRi is freely distributable under the MIT license.
-#     For full details and documentation:
-#     http://jefri.org
-
-jiffies = require('jefri-jiffies')
-JEFRi = require('jefri')
-
 class ObjectStore extends jiffies.Event
-	constructor: (options)->
-		@settings = { version: "1.0", size: Math.pow(2, 16) }
-		Object.assign @settings, options
-		@_store = {}
-		if not @settings.runtime
-			throw {message: "LocalStore instantiated without runtime to reference."}
-
-	# #### _set*(key, value)*
-	# Generic key/value setter, should be overwritten by extending classes.
-	_set: (key, value)->
-		@_store[key] = value
-
-	# #### _get*(key)*
-	# Generic key/value getter, should be overwritten by extending classes.
-	_get: (key)->
-		@_store[key] || '{}'
-
-	# ### execute*(type, transaction)*
-	# Run the transaction.
-	execute: (type, transaction) ->
-		transaction = _transactify transaction
-		@emit "sending", transaction
-
-		@["do_#{type}"] transaction
-		@settings.runtime.expand transaction
-
-		d = jiffies.promise.defer()
-		d.resolve(transaction)
-		d.promise
-
-	# #### get*(transaction)*
-	# Execute as a `get` transaction.
-	get: (transaction)->
-		@execute 'get', transaction
-
-	# #### persist*(transaction)*
-	# Execute as a `persist` transaction.
-	persist: (transction)->
-		@execute 'persist', transction
-
-	# ### do_persist*(transction)*
-	# Treat the transaction as a persistence call. Save the data.
-	do_persist: (transaction) ->
-		transaction.entities =
-			for entity in transaction.entities
-				@_save entity
-
-	# #### _save*(entity)*
-	# Save the data in the store's storage.
-	_save: (entity) ->
-		# Merge the new data over the old data.
-		entity = Object.assign @_find(entity), entity
-		# Store the JSON of the entity.
-		@_set @_key(entity), JSON.stringify(entity)
-		# Register the entity with the type map.
-		@_type entity._type, entity._id
-		# Return the bare encoded object.
-		entity
-
+    ###
 	# ### do_get*(transaction)*
 	# Treat the transaction as a lookup. Find all data matching the specs.
 	do_get: (transaction) ->
+        ###
 		# Let _lookup handle the actual lookups.
 		# _lookup can return an array, a single entity, or an object of id->entity kvs.
 		# We lookup each spec and then add it to a keyed object to kill off duplicates as we go.
@@ -99,10 +33,6 @@ class ObjectStore extends jiffies.Event
 		#return the transaction
 		transaction
 
-	# #### _find*(entity)*
-	# Return an entity directly, or pass a spec to _lookup.
-	_find: (entity) ->
-		JSON.parse @_get @_key entity
 
 	# #### _lookup*(spec)*
 	# Given a transaction spec, pull all entities (including relationships) that match.
@@ -171,25 +101,6 @@ class ObjectStore extends jiffies.Event
 		# Return the filtered results.
 		results
 
-	# #### _type*(type[, id])*
-	# Get a set of stored IDs for a particular type. If an ID is passed in, add it to the set.
-	_type: (type, id=null) ->
-		# Get the current set
-		list = JSON.parse @_get(type) || "{}"
-		if id
-			# Indexed by ID, so just need an empty set.
-			list[id] = ""
-			# Restringify. Silly hashmaps being string -> string
-			@_set type, JSON.stringify list
-		# Return the list.
-		list
-
-	# #### _key*(entity)*
-	# Return the full key type/id string for an entity, since this is the bare entity with no methods.
-	_key: (entity, id = entity._id) ->
-		_type = entity._type
-		"#{_type}/#{id}"
-
 	# ### _sieve*(name, property, spec)*
 	# Return a function to use to filter on a particular spec field. These functions implement
 	# the logic described in JEFRi Core docs 5.1.1
@@ -243,9 +154,3 @@ class ObjectStore extends jiffies.Event
 						return true
 				return false
 
-	_transactify = (transaction)->
-		if not Function.isFunction(transaction.encode)
-			transaction = new JEFRi.Transaction transaction
-		transaction.encode()
-
-module.exports =  ObjectStore
