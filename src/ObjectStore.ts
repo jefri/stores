@@ -86,14 +86,14 @@ export class ObjectStore extends EventEmitter implements IStore {
     for (let name in def.properties) {
       if (name in spec && name !== def.key) {
         let property = def.properties[name];
-        results = results.filter(() => this._sieve(name, property, spec[name]));
+        results = results.filter(this._sieve(name, property, spec[name]));
       }
     }
 
     let findRelatedSingle =
         (spec: EntitySpec, relationship: EntityRelationship) =>
             (entity: BareEntity) => {
-              return this._lookup(Object.assign({}, spec, {
+              return this._lookup(<EntitySpec>Object.assign({}, spec, {
                 _type: relationship.to.type,
                 [relationship.to.property]: entity[relationship.property]
               }))
@@ -128,15 +128,98 @@ export class ObjectStore extends EventEmitter implements IStore {
     };
 
     return dedupeEntityArray(
-        results.concat(Object.keys(def.relationships)
+        results.concat(Object.keys(def.relationships || {})
                            .filter((name: string) => name in spec)
                            .map<BareEntity[]>(findRelationships)
                            .reduce<BareEntity[]>(flatten, [])
                            .filter((e) => !!e)));
   }
 
-  _sieve(name: string, property: EntityProperty, spec: EntitySpec): boolean {
-    return true;
+  _sieve(name: string, property: EntityProperty,
+         spec: any): (e: BareEntity) => boolean {
+    if (Number.isFinite(spec)) {
+      if (spec % 1 === 0) {
+        spec = ['=', spec];
+      } else {
+        spec = [spec, 8];
+      }
+    }
+    if (typeof spec === 'string') {
+      spec = ['REGEX', '.*' + spec + '.*'];
+    }
+    if (!spec) {
+      spec = ['=', void 0];
+    }
+    if (!Array.isArray(spec)) {
+      throw {
+        message: "Lookup specification is invalid (in LocalStore::_sieve).",
+        name: name,
+        property: property,
+        spec: spec
+      };
+    }
+    if (Number.isFinite(spec[0])) {
+      return (entity: BareEntity): boolean => {
+        return Math.abs(<number>entity[name] - spec[0]) < Math.pow(2, +spec[1]);
+      };
+    }
+    // if (Array.isArray(spec[0])) {
+    //   spec[i] = (function() {
+    //     var l, len, results1;
+    //     results1 = [];
+    //     for (i = l = 0, len = spec.length; l < len; i = ++l) {
+    //       s = spec[i];
+    //       results1.push(_sieve(name, property, spec[i]));
+    //     }
+    //     return results1;
+    //   })();
+    //   return (entity: BareEntity): boolean => {
+    //     var filter, l, len;
+    //     for (l = 0, len = spec.length; l < len; l++) {
+    //       filter = spec[l];
+    //       if (!filter(entity)) {
+    //         return false;
+    //       }
+    //     }
+    //     return true;
+    //   };
+    // }
+    switch (spec[0]) {
+      case "=":
+        return (entity: BareEntity): boolean => {
+          return entity[name] === spec[1];
+        };
+      case "<=":
+        return (entity: BareEntity): boolean => {
+          return entity[name] <= spec[1];
+        };
+      case ">=":
+        return (entity: BareEntity): boolean => {
+          return entity[name] >= spec[1];
+        };
+      case "<":
+        return (entity: BareEntity): boolean => {
+          return entity[name] < spec[1];
+        };
+      case ">":
+        return (entity: BareEntity): boolean => {
+          return entity[name] > spec[1];
+        };
+      case "REGEX":
+        return (entity: BareEntity): boolean => {
+          return new RegExp(<string>spec[1]).test("" + entity[name]);
+        };
+      default:
+        return (entity: BareEntity): boolean => {
+          let field: any;
+          while (field = spec.shift) {
+            if (entity[name] === field) {
+              return true;
+            }
+          }
+          return false;
+        };
+    }
   }
 
   // The internal `persist` implementaion.
@@ -149,7 +232,7 @@ export class ObjectStore extends EventEmitter implements IStore {
   }
 
   _decode(entity: AnyEntity): BareEntity {
-    return typeof(<Entity>entity)._encode === 'Function' ?
+    return typeof(<Entity>entity)._encode === 'function' ?
                (<Entity>entity)._encode() :
                <BareEntity>entity;
   }

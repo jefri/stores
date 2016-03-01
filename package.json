@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "format": "checkscripts.sh",
-    "build": "rm -rf build/ lib/ && tsc && babel build -d build && cp -a build/src lib && webpack build/test/**/*.js build/tests.js",
+    "build": "rm -rf build/ lib/ && tsc && cp -a build/src lib && webpack build/test/**/*.js build/tests.js",
     "pretest": "npm run format ; npm run build",
     "test": "mocha build/test/spec/*.js && karma start karma.config.js"
   },
